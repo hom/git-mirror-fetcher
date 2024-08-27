@@ -1,15 +1,10 @@
 $directoryPath = Read-Host "Enter the directory path"
-$folders = Get-ChildItem -Path $directoryPath -Directory
 
-foreach ($folder in $folders) {
-    # 检查是否是 Git 仓库
+function Run-Fetch($folder)
+{
     if (Test-Path -Path (Join-Path -Path $folder.FullName -ChildPath ".git")) {
-        # 获取当前分支
         $currentBranch = (git -C $folder.FullName branch --show-current).Trim()
-        
-        # 执行 git pull
         git -C $folder.FullName pull origin $currentBranch
-        
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Git pull successful."
         } else {
@@ -18,5 +13,15 @@ foreach ($folder in $folders) {
     } else {
         Write-Host $folder.FullName
         Write-Host "The current directory is not a Git repository."
+        Map-Fetch $folder.GetDirectories()
     }
 }
+
+function Map-Fetch($folders)
+{
+    foreach ($folder in $folders) {
+        Run-Fetch($folder)
+    }
+}
+
+Map-Fetch(Get-ChildItem -Path $directoryPath -Directory)
